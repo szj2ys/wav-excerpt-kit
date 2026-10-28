@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "allow_overlap": false,
+  "ranges": [
+    {"start": 0, "end": 5},
+    {"start": 5, "end": 10},
+    {"start": 10, "end": 12}
+  ]
+}

@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src 'none'; font-src 'none'; connect-src 'none'; script-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="description" content="Prepare reproducible PCM16 WAV excerpts with an offline Python recipe, exact frame ranges and a verifiable source manifest.">
+<title>Reproducible WAV excerpt packets · PewTranslate</title>
+<style>
+:root{color-scheme:light;--ink:#183d32;--muted:#50675e;--green:#17654d;--line:#bacbc2;--paper:#f2f5ee;--soft:#e4eee4}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.65 system-ui,-apple-system,"Segoe UI",sans-serif}main{max-width:1000px;margin:auto;padding:32px 22px 60px}header{max-width:820px;margin-bottom:30px}h1{font-size:clamp(2.1rem,6vw,3.4rem);line-height:1.12;letter-spacing:-.035em;margin:10px 0 20px}h2{font-size:1.55rem;line-height:1.3;margin:0 0 16px}h3{font-size:1.08rem;margin:22px 0 8px}p{margin:0 0 16px}.eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:.82rem;font-weight:750}.lead{font-size:1.13rem}.muted,small{color:var(--muted)}a{color:var(--green);text-underline-offset:.18em;overflow-wrap:anywhere}a:hover{text-decoration-thickness:2px}:focus-visible{outline:3px solid #a14b13;outline-offset:4px}.skip{position:absolute;top:-100px;left:10px;background:white;padding:12px;z-index:2}.skip:focus{top:8px}.actions{display:flex;flex-wrap:wrap;gap:12px;margin:24px 0}.button{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:11px 17px;border:1px solid var(--green);border-radius:6px;background:white;color:var(--green);font-weight:700;text-decoration:none}.primary{background:var(--green);color:white}.panel{background:#fff;border:1px solid var(--line);border-radius:10px;padding:25px;margin:24px 0}.notice{background:var(--soft);border-left:4px solid var(--green);padding:16px 18px;margin:20px 0}.warning{background:#fff5e9;border-color:#a14b13}pre{max-width:100%;overflow-x:auto;background:#f2f5f3;border:1px solid var(--line);padding:16px;border-radius:5px;font:15px/1.65 ui-monospace,Consolas,monospace;white-space:pre;tab-size:4}code{font-family:ui-monospace,Consolas,monospace;font-size:.9em}li{margin:8px 0}ul,ol{padding-left:1.4rem}table{width:100%;border-collapse:collapse;font-size:.94rem}th,td{border-bottom:1px solid var(--line);text-align:left;vertical-align:top;padding:12px 8px}th{background:#f0f5f1}.table-wrap{overflow-x:auto}summary{cursor:pointer;min-height:48px;padding:10px 0;font-weight:700}.file-links{display:flex;gap:14px;flex-wrap:wrap}.file-links a{padding:9px 0;min-height:44px}footer{font-size:.94rem;margin-top:30px}section{scroll-margin-top:20px}@media(max-width:600px){main{padding:22px 16px 40px}.panel{padding:19px 17px}.actions{flex-direction:column}.button{width:100%}pre{font-size:14px;padding:13px}th,td{padding:10px 6px}}@media print{body{background:#fff;font-size:11pt}main{padding:0}.skip,.actions{display:none}.panel{break-inside:avoid;border:0;padding:0}pre{white-space:pre-wrap;overflow-wrap:anywhere}details>p,details>ul{display:block}}
+</style>
+</head>
+<body>
+<a class="skip" href="#walkthrough">Skip to the walkthrough</a>
+<main>
+<header>
+<p class="eyebrow">A local recording-review kit</p>
+<h1>Give each audio excerpt an exact route back.</h1>
+<p class="lead">Choose explicit PCM frame ranges, export separate WAV files, and keep a reproducible manifest of where every frame came from.</p>
+<p>This small Python kit prepares audio for a reviewer. It does not listen, transcribe, translate or decide where a sentence ends.</p>
+<div class="actions"><a class="button primary" id="bundle" href="wav-excerpt-kit.zip" download>Download the offline kit · ZIP</a><a class="button" href="README.md">Read the complete instructions</a></div>
+<p class="muted"><strong>Windows export · installed Python 3.10+ · no packages.</strong> The files run locally. No upload, account, microphone or audio player is involved. Development checks use Python 3.10.2 on Windows; other combinations are not established by that test.</p>
+</header>
+<section class="panel" id="walkthrough" aria-labelledby="step1">
+<h2 id="step1">1. Reproduce a tiny example first</h2>
+<p>Extract the ZIP into a new private folder and open a terminal there. Check <code>python --version</code>. Then run these commands one at a time. The fixture contains mathematical samples, not recorded speech.</p>
+<pre tabindex="0" aria-label="Example commands"><code>python wav_excerpt.py fixture demo.wav
+python wav_excerpt.py info demo.wav
+python wav_excerpt.py plan demo.wav --recipe example-ranges.json
+python wav_excerpt.py export demo.wav --recipe example-ranges.json --out review-packet
+python verify_packet.py demo.wav review-packet</code></pre>
+<p><code>info</code> shows 12 stereo frames at 8,000 Hz. The 104-byte source has an odd metadata chunk, so its PCM starts at byte 56. The complete plan lists both windows, filenames, predicted hashes and the total size. A plan creates no audio files.</p>
+<div class="table-wrap"><table><caption>Expected example results</caption><thead><tr><th scope="col">Selection</th><th scope="col">Frames</th><th scope="col">New WAV</th></tr></thead><tbody><tr><td><code>[2,5)</code></td><td>3</td><td>56 bytes</td></tr><tr><td><code>[8,12)</code></td><td>4</td><td>60 bytes</td></tr></tbody></table></div>
+<p>The new <code>review-packet</code> folder contains two independent WAVs and <code>manifest.json</code>. The verifier reads the actual files and compares their samples with the source. Its full-partition result is <code>null</code> here because these windows do not cover the whole source.</p>
+<details><summary>Check complete source reconstruction</summary><p>This second recipe covers all source frames in three windows. It explicitly includes a short final window, without dropping a remainder.</p><pre tabindex="0" aria-label="Partition commands"><code>python wav_excerpt.py export demo.wav --recipe example-partition.json --out full-partition
+python verify_packet.py demo.wav full-partition</code></pre><p>The result confirms that joining the three <strong>PCM payloads</strong> reproduces all 48 source PCM bytes. Do not join whole WAV containers.</p></details>
+</section>
+<section class="panel" aria-labelledby="step2">
+<h2 id="step2">2. Write a selection you can repeat</h2>
+<p>Keep your original recording. Read its supported format and frame count with <code>info</code>, then copy and edit an example recipe. Choose enough context using your usual player or editor; this kit cannot hear whether a cut is useful.</p>
+<pre tabindex="0" aria-label="Complete recipe example"><code>{
+  "version": 1,
+  "allow_overlap": false,
+  "ranges": [
+    {"start": 2, "end": 5, "label": "A private review note"}
+  ]
+}</code></pre>
+<p>A range is zero-based and <strong>end-exclusive</strong>: <code>[2,5)</code> means frames 2, 3 and 4. A stereo frame has one sample per channel. Frame 2 at 8,000 Hz is exactly <code>2/8000</code> seconds into the sample stream, not a recording wall-clock time.</p>
+<ul><li>Require integer values with <code>0 ≤ start &lt; end ≤ source frames</code>. No decimals, rounding or clamping.</li><li>Range order stays as written. Overlap rejects unless you explicitly set <code>allow_overlap</code> to <code>true</code>.</li><li>Labels are optional, limited to 120 Unicode code points, and never used as paths. Unknown or duplicate fields reject.</li><li>List each range explicitly. There is no automatic silence, word boundary or fixed-duration splitter.</li></ul>
+<p>Run <code>plan</code> with your recipe and inspect every range before <code>export</code>. One invalid range prevents the batch, even when earlier ranges are valid.</p>
+</section>
+<section class="panel" aria-labelledby="step3">
+<h2 id="step3">3. Hand over files with their source map</h2>
+<p>Each excerpt has a safe ordinal filename. Its manifest records the source and output SHA-256 hashes, format and frame counts, absolute source byte slice, exact rational times, your recipe and omitted metadata. For output frame <code>j</code>, the original frame is <code>start + j</code>.</p>
+<p>The separate verifier uses Python's <code>wave</code> reader for outputs and compares real PCM bytes with the original. Repeating the same source, recipe and tool version produces deterministic files. The manifest has no volatile timestamps or absolute source path.</p>
+<div class="notice warning"><strong>The handoff still contains private material.</strong> Excerpts contain the selected speech, and labels may be sensitive. Share only with intended reviewers. Metadata removal is not anonymization; a hash does not authenticate the speaker or prove review completion.</div>
+<p>For the human follow-up, use the <a href="https://pewtranslate.com/en/guides/check-sermon-transcript-translation-errors">PewTranslate guide to checking transcript and translation errors</a>. Return to the recording when wording is uncertain. Exact sample bytes cannot verify meaning.</p>
+</section>
+<section class="panel" aria-labelledby="limits">
+<h2 id="limits">Know what this copy preserves</h2>
+<p><strong>Exact selected PCM frames:</strong> same sample integers, interleaved channels, rate and width. No gain, fade, downmix, normalization or resampling. An abrupt boundary can click or remove context.</p>
+<p><strong>Fresh containers:</strong> every output has a new minimal WAV header. Opaque source chunks are omitted and listed by hexadecimal ID and size. Cue points, loop information and recording-time metadata are not carried into shortened files.</p>
+<details><summary>Supported format and hard bounds</summary><p>Little-endian RIFF/WAVE tag 1, signed PCM16, mono/stereo, 8,000–96,000 Hz; one nonempty data chunk and one fmt chunk in either order. fmt16 or fmt18 with zero extra count only. Every outer extent, odd padding, rate, alignment and complete frame is checked. Unknown metadata receives no semantic validation. RF64, RIFX, float, compressed and extensible formats are unsupported.</p><ul><li>Source: 64 MiB; 256 chunks.</li><li>Recipe: 1 MiB; 1–1,000 excerpts; at most four nested JSON containers.</li><li>All planned WAVs: 256 MiB, counting repeated overlapping frames and headers.</li><li>Manifest: 4 MiB. Bounds reject; nothing is silently truncated.</li></ul></details>
+<details><summary>Existing files and failed writes</summary><p>Export accepts only a new simple folder name in the current directory. It refuses existing destinations, path traversal and reserved device names. Source and recipe are read-only.</p><p>After validation, files are written and checked in a unique staging folder. Windows finalization refuses a destination that appears late. Failure returns nonzero and reports any staging left behind; no recursive cleanup runs. Inspect that exact private staging folder before manual removal. This is not a power-loss guarantee or a defense against someone changing your working directory.</p></details>
+</section>
+<footer>
+<p>Original AI-assisted code and tutorial by <a href="https://pewtranslate.com/">PewTranslate</a>, © 2026 szj2ys. Live-translation accounts are closed. This independent kit requires none and makes no audio-quality, standards-certification or production-readiness claim.</p>
+<p>Format and runtime references: <a href="https://learn.microsoft.com/en-us/windows/win32/xaudio2/resource-interchange-file-format--riff-">Microsoft RIFF</a>, <a href="https://learn.microsoft.com/en-us/windows/win32/api/mmeapi/ns-mmeapi-waveformatex">WAVEFORMATEX</a>, <a href="https://docs.python.org/3.12/library/wave.html">Python wave</a> and <a href="https://docs.python.org/3.12/library/os.html#os.rename">os.rename</a>.</p>
+<div class="file-links"><a href="wav_excerpt.py" download>CLI source</a><a href="verify_packet.py" download>Verifier source</a><a href="example-ranges.json" download>Range recipe</a><a href="example-partition.json" download>Partition recipe</a><a href="README.md">README</a><a href="LICENSE">MIT license</a></div>
+</footer>
+</main>
+</body>
+</html>

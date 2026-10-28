@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "allow_overlap": false,
+  "ranges": [
+    {"start": 2, "end": 5, "label": "Synthetic three-frame excerpt"},
+    {"start": 8, "end": 12, "label": "Synthetic four-frame excerpt"}
+  ]
+}
